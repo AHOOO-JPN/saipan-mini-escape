@@ -1,0 +1,555 @@
+
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Saipan Mini Escape</title>
+<style>
+  :root{
+    --bg0:#06101f;
+    --bg1:#0b2540;
+    --bg2:#0aa6a6;
+    --sand:#f6e7c3;
+    --panel: rgba(255,255,255,.08);
+    --line: rgba(255,255,255,.14);
+    --text:#f3f7ff;
+    --muted: rgba(243,247,255,.72);
+    --accent:#7cf7c4;
+    --danger:#ff6b6b;
+  }
+  *{ box-sizing:border-box; }
+  body{
+    margin:0;
+    font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Hiragino Kaku Gothic ProN", "Noto Sans JP", sans-serif;
+    color:var(--text);
+    background: radial-gradient(900px 520px at 15% 0%, rgba(124,247,196,.16), transparent 55%),
+                radial-gradient(900px 520px at 85% 10%, rgba(120,160,255,.18), transparent 55%),
+                linear-gradient(180deg, var(--bg0), var(--bg1) 45%, rgba(10,166,166,.18));
+    min-height:100vh;
+  }
+  .wrap{ max-width:860px; margin:0 auto; padding:18px; }
+  .card{
+    border:1px solid var(--line);
+    background: linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+    border-radius:16px;
+    padding:16px;
+    backdrop-filter: blur(6px);
+  }
+  h1{ margin:0 0 6px; font-size:20px; letter-spacing:.3px; }
+  .sub{ margin:0 0 14px; color:var(--muted); font-size:13px; line-height:1.55; }
+
+  .grid{ display:grid; grid-template-columns: 1.25fr .75fr; gap:12px; }
+  @media (max-width:760px){ .grid{ grid-template-columns:1fr; } }
+
+  .panel{
+    border:1px solid var(--line);
+    background: rgba(10,18,36,.55);
+    border-radius:14px;
+    padding:12px;
+    overflow:hidden;
+  }
+
+  /* Scene */
+  .scene{
+    position:relative;
+    border-radius:12px;
+    height:330px;
+    border:1px solid rgba(255,255,255,.10);
+    overflow:hidden;
+    background:
+      radial-gradient(900px 240px at 50% 10%, rgba(255,190,120,.22), transparent 60%),
+      linear-gradient(180deg, rgba(5,20,45,.20), rgba(0,0,0,.30)),
+      linear-gradient(180deg, rgba(10,166,166,.18), rgba(6,16,31,.0) 65%),
+      linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+  }
+  .scene::before{
+    content:"";
+    position:absolute; inset:0;
+    background:
+      linear-gradient(180deg, rgba(0,0,0,.0) 55%, rgba(246,231,195,.18) 55%),
+      radial-gradient(800px 200px at 50% 72%, rgba(246,231,195,.18), transparent 70%);
+    opacity:.95;
+  }
+  .badge{
+    position:absolute; top:12px; left:12px;
+    padding:8px 10px;
+    border:1px solid var(--line);
+    background: rgba(0,0,0,.22);
+    border-radius:999px;
+    font-size:12px;
+    color: var(--muted);
+  }
+
+  .hotspot{
+    position:absolute;
+    border:1px dashed rgba(255,255,255,.22);
+    background: rgba(255,255,255,.06);
+    border-radius:12px;
+    padding:8px 10px;
+    font-size:12px;
+    cursor:pointer;
+    user-select:none;
+    transition: transform .08s ease, background .2s ease;
+  }
+  .hotspot:hover{ background: rgba(255,255,255,.10); transform: translateY(-1px); }
+  .hotspot small{ display:block; color:var(--muted); margin-top:2px; }
+
+  .toast{ margin-top:10px; min-height:20px; color:var(--muted); font-size:13px; line-height:1.55;}
+  .toast.good{ color: var(--accent); }
+  .toast.bad{ color: var(--danger); }
+
+  .actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+  button{
+    border:1px solid var(--line);
+    background: rgba(255,255,255,.06);
+    color:var(--text);
+    padding:9px 10px;
+    border-radius:10px;
+    cursor:pointer;
+    font-weight:650;
+    font-size:13px;
+  }
+  button:hover{ background: rgba(255,255,255,.10); }
+  button.primary{ border-color: rgba(124,247,196,.55); }
+  button.danger{ border-color: rgba(255,107,107,.55); }
+
+  .kv{
+    display:flex; justify-content:space-between; align-items:center; gap:10px;
+    padding:10px 10px;
+    border:1px dashed rgba(255,255,255,.18);
+    border-radius:12px;
+  }
+  .kv span{ color:var(--muted); font-size:12px; }
+  .inv{ display:flex; flex-wrap:wrap; gap:8px; margin-top:10px; }
+  .tag{
+    display:inline-flex; align-items:center; gap:6px;
+    border:1px solid rgba(255,255,255,.16);
+    background: rgba(255,255,255,.04);
+    padding:6px 8px; border-radius:999px; font-size:12px;
+  }
+  .tag b{ color: var(--accent); }
+
+  .tiny{ color:var(--muted); font-size:12px; line-height:1.55; }
+  .log{ margin-top:8px; line-height:1.6; }
+
+  /* Kingfisher */
+  .birds{
+    display:grid; grid-template-columns: repeat(3, 1fr); gap:10px;
+  }
+  .bird{
+    border:1px solid rgba(255,255,255,.14);
+    background: rgba(255,255,255,.05);
+    border-radius:12px;
+    padding:10px;
+    cursor:pointer;
+    transition: transform .08s ease, background .2s ease;
+    text-align:center;
+  }
+  .bird:hover{ transform: translateY(-1px); background: rgba(255,255,255,.09); }
+  .bird .name{ font-weight:750; margin-top:6px; font-size:12px; }
+  .bird .sig{ font-size:18px; margin-top:4px; }
+  .bird .hint{ font-size:11px; color:var(--muted); margin-top:6px; }
+
+  .codeRow{ display:flex; gap:8px; margin-top:10px; }
+  input{
+    flex:1;
+    border:1px solid rgba(255,255,255,.16);
+    background: rgba(0,0,0,.26);
+    color:var(--text);
+    padding:10px 10px;
+    border-radius:10px;
+    outline:none;
+  }
+
+  .footer{
+    margin-top:12px;
+    display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;
+  }
+  .progress{
+    height:10px; flex:1; min-width:220px;
+    background: rgba(255,255,255,.07);
+    border:1px solid rgba(255,255,255,.14);
+    border-radius:999px; overflow:hidden;
+  }
+  .bar{
+    height:100%;
+    width:0%;
+    background: linear-gradient(90deg, rgba(124,247,196,.95), rgba(120,160,255,.95));
+  }
+
+  a.cta{
+    display:inline-flex; align-items:center; justify-content:center;
+    text-decoration:none;
+    border:1px solid rgba(124,247,196,.55);
+    background: rgba(124,247,196,.12);
+    color: var(--text);
+    padding:10px 12px;
+    border-radius:12px;
+    font-weight:800;
+    gap:8px;
+  }
+  a.cta:hover{ background: rgba(124,247,196,.18); }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="card">
+    <h1 id="title">Saipan Mini Escape：ビーチと3羽のキングフィッシャー</h1>
+    <p class="sub" id="subtitle">
+      夕暮れのビーチ。波音の中、3羽のキングフィッシャーが同じ枝に並んでいる。<br>
+      「サンゴ→夕日→波→貝」の順に“合図”を読めば、帰り道が開くらしい。
+    </p>
+
+    <div class="grid">
+      <!-- Left: Scene / Main -->
+      <div class="panel">
+        <div class="scene" id="scene">
+          <div class="badge" id="sceneBadge">Scene 1/3：サイパンのビーチ</div>
+
+          <!-- hotspots (scene 1) -->
+          <div class="hotspot" id="hsBottle" style="left:14px; bottom:24px;">
+            漂流瓶
+            <small>メモが入ってそう</small>
+          </div>
+          <div class="hotspot" id="hsShell" style="right:14px; bottom:22px;">
+            貝殻
+            <small>光ってる…？</small>
+          </div>
+          <div class="hotspot" id="hsBoard" style="left:22px; top:62px;">
+            木の看板
+            <small>何か書いてある</small>
+          </div>
+
+          <!-- scene 2 birds -->
+          <div id="birdsWrap" style="position:absolute; inset:52px 12px 12px 12px; display:none;">
+            <div class="birds">
+              <div class="bird" data-bird="sunset">
+                <div style="font-size:34px;">🐦</div>
+                <div class="name">Bird 1</div>
+                <div class="sig">🌅</div>
+                <div class="hint">夕日を合図にする</div>
+              </div>
+              <div class="bird" data-bird="wave">
+                <div style="font-size:34px;">🐦</div>
+                <div class="name">Bird 2</div>
+                <div class="sig">🌊</div>
+                <div class="hint">波を合図にする</div>
+              </div>
+              <div class="bird" data-bird="shell">
+                <div style="font-size:34px;">🐦</div>
+                <div class="name">Bird 3</div>
+                <div class="sig">🐚</div>
+                <div class="hint">貝を合図にする</div>
+              </div>
+            </div>
+
+            <div class="tiny" style="margin-top:10px;">
+              3羽は“記号”で話している。まずはビーチで「サンゴ」の手がかりを見つけよう。
+            </div>
+          </div>
+
+          <!-- scene 3 door -->
+          <div id="doorWrap" style="position:absolute; inset:52px 12px 12px 12px; display:none;">
+            <div class="tiny">Scene 3/3：帰り道のゲート（4桁）</div>
+            <div class="codeRow">
+              <input id="codeInput" inputmode="numeric" placeholder="4桁コード（例：3012）" />
+              <button class="primary" id="codeBtn">開ける</button>
+            </div>
+            <div class="tiny" style="margin-top:8px;">
+              ヒント：看板（サンゴ）＋3羽（夕日・波・貝）＝「サンゴ→夕日→波→貝」
+            </div>
+          </div>
+        </div>
+
+        <div class="toast" id="toast"></div>
+
+        <div class="actions">
+          <button id="btnGoBeach">ビーチへ</button>
+          <button id="btnGoBirds">3羽の枝へ</button>
+          <button id="btnGoGate">ゲートへ</button>
+          <button id="btnHint">ヒント</button>
+          <button class="danger" id="btnReset">リセット</button>
+        </div>
+
+        <div class="footer">
+          <div class="progress" aria-label="進行度"><div class="bar" id="bar"></div></div>
+          <div class="tiny" id="status">進行度: 0%</div>
+        </div>
+      </div>
+
+      <!-- Right: Inventory / Log -->
+      <div class="panel">
+        <div class="kv">
+          <div><strong>所持品</strong></div>
+          <div><span id="invCount">0</span> / 3</div>
+        </div>
+        <div class="inv" id="inv"></div>
+
+        <div style="margin-top:12px" class="kv">
+          <div><strong>メモ</strong></div>
+          <div><span>観察ログ</span></div>
+        </div>
+        <div class="tiny log" id="log"></div>
+
+        <div style="margin-top:14px;">
+          <div class="tiny">クリア後の導線（任意）</div>
+          <a class="cta" id="cta" href="#" target="_blank" rel="noopener">▶ 旅の相談をする</a>
+          <div class="tiny" style="margin-top:8px;">
+            ※CTAはこのHTML上部の設定で変更できます。
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  // ====== かんたん設定（ここだけ変えればOK） ======
+  const CONFIG = {
+    title: "Saipan Mini Escape：ビーチと3羽のキングフィッシャー",
+    subtitle: "夕暮れのビーチ。波音の中、3羽のキングフィッシャーが同じ枝に並んでいる。\\n「サンゴ→夕日→波→貝」の順に“合図”を読めば、帰り道が開くらしい。",
+    ctaLabel: "▶ サイパンの相談をする",
+    ctaUrl: "https://example.com/",   // ←あなたの問い合わせ/予約/LPに変更
+    // ビーチ写真を使いたい場合：自分の写真URL（https）を入れる（著作権OKなものだけ）
+    bgImageUrl: ""
+  };
+
+  // ====== State ======
+  const state = {
+    scene: 0, // 0 beach, 1 birds, 2 gate
+    inv: new Set(),
+    flags: {
+      readBottle:false,
+      gotShell:false,
+      sawCoral:false,
+      talkedBirds: new Set()
+    },
+    log: []
+  };
+
+  const $ = (id) => document.getElementById(id);
+
+  // ====== UI helpers ======
+  function toast(msg, type=""){
+    const el = $("toast");
+    el.textContent = msg;
+    el.className = "toast" + (type ? " " + type : "");
+  }
+  function addLog(msg){
+    state.log.unshift("・" + msg);
+    state.log = state.log.slice(0, 7);
+    $("log").innerHTML = state.log.map(escapeHtml).join("<br>");
+  }
+  function escapeHtml(s){
+    return s.replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;");
+  }
+
+  function give(item){
+    state.inv.add(item);
+    renderInv();
+  }
+  function has(item){ return state.inv.has(item); }
+
+  function progress(){
+    // 3 items: NOTE, SHELL, CORAL
+    const count = ["NOTE","SHELL","CORAL"].filter(x => has(x)).length;
+    return Math.round((count/3)*100);
+  }
+  function renderInv(){
+    const inv = $("inv");
+    inv.innerHTML = "";
+
+    const meta = {
+      NOTE: {name:"瓶のメモ", icon:"📜"},
+      SHELL:{name:"光る貝殻", icon:"🐚"},
+      CORAL:{name:"サンゴの合図", icon:"🪸"}
+    };
+
+    const items = Array.from(state.inv);
+    if(items.length === 0){
+      inv.innerHTML = `<span class="tiny">（手ぶら。海風だけ持ってる）</span>`;
+    } else {
+      for(const it of items){
+        const t = document.createElement("div");
+        t.className = "tag";
+        t.innerHTML = `<b>${meta[it]?.icon ?? "●"}</b> ${meta[it]?.name ?? it}`;
+        inv.appendChild(t);
+      }
+    }
+    $("invCount").textContent = items.length;
+    $("bar").style.width = progress() + "%";
+    $("status").textContent = "進行度: " + progress() + "%";
+  }
+
+  function setScene(n){
+    state.scene = n;
+    $("birdsWrap").style.display = (n === 1) ? "block" : "none";
+    $("doorWrap").style.display  = (n === 2) ? "block" : "none";
+
+    // hotspots are only for beach scene
+    const hs = [$("hsBottle"), $("hsShell"), $("hsBoard")];
+    hs.forEach(x => x.style.display = (n === 0) ? "block" : "none");
+
+    const badge = $("sceneBadge");
+    if(n === 0) badge.textContent = "Scene 1/3：サイパンのビーチ";
+    if(n === 1) badge.textContent = "Scene 2/3：3羽のキングフィッシャー";
+    if(n === 2) badge.textContent = "Scene 3/3：帰り道のゲート";
+  }
+
+  // ====== Game logic ======
+  function onBottle(){
+    if(state.flags.readBottle){
+      toast("漂流瓶は空。波に返すのが礼儀。", "");
+      return;
+    }
+    state.flags.readBottle = true;
+    give("NOTE");
+    addLog("漂流瓶のメモ：「合図は “サンゴ→夕日→波→貝”。4桁は“色の番号”。」");
+    toast("メモを入手！「サンゴ→夕日→波→貝」…順番が大事。", "good");
+  }
+
+  function onShell(){
+    if(state.flags.gotShell){
+      toast("もう持ってる（貝殻は増えるが荷物も増える）。", "");
+      return;
+    }
+    state.flags.gotShell = true;
+    give("SHELL");
+    addLog("砂の中から光る貝殻。裏に小さく「2」。");
+    toast("光る貝殻を入手！裏に「2」。", "good");
+  }
+
+  function onBoard(){
+    if(state.flags.sawCoral){
+      toast("看板：『🪸=3 / 🌅=0 / 🌊=1 / 🐚=2』", "");
+      return;
+    }
+    state.flags.sawCoral = true;
+    give("CORAL");
+    addLog("木の看板：『🪸=3 / 🌅=0 / 🌊=1 / 🐚=2』と刻まれている。");
+    toast("看板を読んだ！『🪸=3 / 🌅=0 / 🌊=1 / 🐚=2』", "good");
+  }
+
+  function onBirdClick(which){
+    // require at least read board (coral mapping) to make sense
+    if(!state.flags.sawCoral){
+      toast("3羽は何か言ってる…が、翻訳辞書（看板）が必要そう。", "bad");
+      addLog("3羽は記号で話している。まず看板を読むべき。");
+      return;
+    }
+    state.flags.talkedBirds.add(which);
+
+    const map = { sunset:"🌅=0", wave:"🌊=1", shell:"🐚=2" };
+    const add = { sunset:"夕日(0)", wave:"波(1)", shell:"貝(2)" };
+
+    addLog(`キングフィッシャーが合図：${add[which]}。`);
+    toast(`合図を確認：${map[which]}。順番は「サンゴ→夕日→波→貝」`, "good");
+  }
+
+  // final code derived from board mapping and fixed order CORAL->SUNSET->WAVE->SHELL = 3 0 1 2
+  const SAFE_CODE = "3012";
+
+  function tryOpen(){
+    const raw = $("codeInput").value || "";
+    const digits = (raw.match(/\d/g) || []).join("").slice(0,4);
+    $("codeInput").value = digits;
+
+    if(digits.length < 4){
+      toast("4桁そろえてね（海は逃げない、でもチャンスは逃げる）。", "bad");
+      return;
+    }
+    if(!state.flags.sawCoral){
+      toast("まず看板（記号→数字）を確認しよう。", "bad");
+      return;
+    }
+    if(state.flags.talkedBirds.size < 3){
+      toast("3羽の合図（夕日・波・貝）を全部確認しよう。", "bad");
+      return;
+    }
+    if(digits !== SAFE_CODE){
+      addLog(`ゲートに「${digits}」→反応なし。`);
+      toast("違うみたい。順番ヒント：「サンゴ→夕日→波→貝」", "bad");
+      return;
+    }
+
+    addLog("ゲートが開いた。目の前に“サイパンの空”みたいな道。");
+    toast("脱出成功！🎉 3羽は得意げに飛び去った。", "good");
+
+    // Make buttons celebratory
+    $("codeBtn").textContent = "開いた！";
+    $("codeBtn").disabled = true;
+  }
+
+  function hint(){
+    if(state.scene === 0){
+      if(!state.flags.readBottle) return toast("ヒント：漂流瓶のメモが“順番”を教えてくれる。", "");
+      if(!state.flags.sawCoral)   return toast("ヒント：木の看板が「記号→数字」の辞書。", "");
+      if(!state.flags.gotShell)   return toast("ヒント：光る貝殻は砂の上（右下）に。", "");
+      return toast("ヒント：次は「3羽の枝」へ。", "");
+    }
+    if(state.scene === 1){
+      if(!state.flags.sawCoral) return toast("ヒント：先にビーチの看板へ戻って辞書を手に入れる。", "");
+      if(state.flags.talkedBirds.size < 3) return toast("ヒント：3羽を全部タップ（夕日・波・貝）。", "");
+      return toast("ヒント：最後はゲートで4桁入力。「サンゴ→夕日→波→貝」。", "");
+    }
+    if(state.scene === 2){
+      return toast("ヒント：看板の辞書どおりに「🪸🌅🌊🐚」→「3012」。", "");
+    }
+  }
+
+  function reset(){
+    state.scene = 0;
+    state.inv = new Set();
+    state.flags = { readBottle:false, gotShell:false, sawCoral:false, talkedBirds:new Set() };
+    state.log = [];
+    $("codeInput").value = "";
+    $("codeBtn").textContent = "開ける";
+    $("codeBtn").disabled = false;
+    renderInv();
+    addLog("リセット。波はいつもゼロから。");
+    toast("最初からどうぞ。", "");
+    setScene(0);
+  }
+
+  // ====== Init ======
+  $("title").textContent = CONFIG.title;
+  $("subtitle").textContent = CONFIG.subtitle;
+  const cta = $("cta");
+  cta.textContent = CONFIG.ctaLabel;
+  cta.href = CONFIG.ctaUrl;
+
+  // optional background photo (use your own/licensed)
+  if(CONFIG.bgImageUrl){
+    $("scene").style.background =
+      `linear-gradient(180deg, rgba(0,0,0,.18), rgba(0,0,0,.35)),
+       url("${CONFIG.bgImageUrl}") center/cover no-repeat`;
+  }
+
+  // Wire
+  $("hsBottle").addEventListener("click", onBottle);
+  $("hsShell").addEventListener("click", onShell);
+  $("hsBoard").addEventListener("click", onBoard);
+
+  document.querySelectorAll(".bird").forEach(el => {
+    el.addEventListener("click", () => onBirdClick(el.dataset.bird));
+  });
+
+  $("btnGoBeach").addEventListener("click", () => setScene(0));
+  $("btnGoBirds").addEventListener("click", () => setScene(1));
+  $("btnGoGate").addEventListener("click",  () => setScene(2));
+  $("btnHint").addEventListener("click", hint);
+  $("btnReset").addEventListener("click", reset);
+
+  $("codeBtn").addEventListener("click", tryOpen);
+  $("codeInput").addEventListener("keydown", (e) => { if(e.key === "Enter") tryOpen(); });
+
+  renderInv();
+  addLog("開始。ビーチの観察から。");
+  toast("まずはビーチで「漂流瓶」「木の看板」「貝殻」を調べよう。", "");
+  setScene(0);
+})();
+</script>
+</body>
+</html>
